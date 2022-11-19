@@ -16,9 +16,12 @@ exports.registerUser = catchAsyncErrors( async(req, res, next)=>{
         }
     })
 
+    const token = user.getJWTToken();
+
     res.status(201).json({
         success:true,
-        user
+        user,
+        token
     })
 
 });
@@ -31,3 +34,33 @@ exports.listAllUsers = catchAsyncErrors( async(req, res, next)=>{
         users
     })
 });
+
+
+// LOGIN USER
+
+exports.loginUser = catchAsyncErrors(async(req, res, next)=>{
+    const {email, password} = req.body;
+
+    if(!email || !password)
+        return next(new ErrorHandler("Please enter Email and Password", 400));
+    
+    const user = await User.findOne({email:email}).select("+password");
+
+    if(!user)
+        return next(new ErrorHandler("Invalid Email or Password", 401));
+
+    const isPasswordMatched = await user.comparePassword(password);
+
+    if(!isPasswordMatched)
+        return next(new ErrorHandler("Invalid Email or Password", 401));
+    
+
+    const token = user.getJWTToken();
+
+    res.status(200).json({
+        success:true,
+        user,
+        token
+    })
+
+})
